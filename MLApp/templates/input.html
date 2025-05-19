@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block header %}
+    <h1>{% block title %}Parameter Inputs{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <main class="container">
+        <section class="card shadow-sm mb-4">
+            <header class="card-header">
+                <h4>ML Model Settings</h4>
+            </header>
+            <article class="card-body">
+                <form method="post">
+                    <!-- Model Selection -->
+                    <fieldset class="mb-3">
+                        <legend class="form-label">Select Model</legend>
+                        <select class="form-select" id="model" name="model" required>
+                            <option value="" selected disabled>Choose a model...</option>
+                            {% for model in models %}
+                                <option value="{{ model }}">{{ model }}</option>
+                            {% endfor %}
+                        </select>
+                    </fieldset>
+
+                    <!-- Time Step Selection -->
+                    <fieldset class="mb-3">
+                        <legend class="form-label">Select Time Steps</legend>
+                        <select class="form-select" id="time_step" name="time_step" required>
+                            {% for step in time_step %}
+                                <option value="{{ step }}">{{ step }} {% if step == 1 %}day{% else %}days{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </fieldset>
+
+                    <!-- Metrics Selection -->
+                    <fieldset class="mb-4">
+                        <legend class="form-label">Performance Metrics to Display</legend>
+                        <ul class="list-unstyled metrics-container">
+                            {% for metric in metrics %}
+                                <li class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="{{ metric.id }}" name="metrics" value="{{ metric.id }}">
+                                    <label class="form-check-label" for="{{ metric.id }}">{{ metric.name }}</label>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </fieldset>
+
+                    <!-- Submit Button -->
+                    <footer class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Predict!!!!!!</button>
+                    </footer>
+                </form>
+            </article>
+        </section>
+    </main>
+{% endblock %}

@@ -1,0 +1,29 @@
+.chart-container {
+    height: auto;
+    min-height: 400px;
+    margin-bottom: 3rem !important; 
+    position: relative;
+    overflow: visible;
+}
+
+.chart-container img {
+    max-height: 500px;
+    object-fit: contain;
+    width: 100%;
+}
+
+hr.section-divider {
+    margin: 2rem 0;
+    border-top: 1px solid #dee2e6;
+    clear: both;
+}
+
+.row.g-4 {
+    clear: both;
+    padding-top: 1rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+    overflow: hidden;
+}

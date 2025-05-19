@@ -20,6 +20,7 @@ from sklearn.svm import SVR
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.metrics import root_mean_squared_error, r2_score, mean_absolute_percentage_error
+# from utils import *
 from typing import Literal
 
 sns.set_theme()
@@ -70,6 +71,12 @@ plt.show()
 
 Some predefined functions which will be moved to utils.py file.  
 I have created a new function `create_dataset` for the fact that using `train_test_split` can enable the model to fit future trend while predicting past values, which is kinda dumb.
+
+19-05: close: 19-5, 18-5,
+20-0
+
+24-05 : close
+25
 """
 
 def create_dataset(df, window=1, predicted_interval=1, fillna=False, size: None|int=None) -> tuple:
@@ -413,8 +420,9 @@ def finetune_frame(model, X_train, X_test, y_train, y_test, param_grid, cv=10) -
 ## Linear Regression
 """
 
-X, y = create_dataset(df, window=2, predicted_interval=5)
+X, y = create_dataset(df, window=5, predicted_interval=5)
 X_train, X_test, y_train, y_test = split_dataset(X, y, test_size=0.2, method='half')
+lr = model_frame(RidgeRegression(), X_train, X_test, y_train, y_test)
 
 X.head(10)
 
@@ -571,3 +579,27 @@ plt.legend()
 plt.gca().set_aspect('equal', adjustable='box')
 plt.grid(True)
 plt.show()
+
+"""Downlaod the models for the demo
+
+"""
+
+# from joblib import dump
+
+# # Linear Regression
+# dump(lr['Pipeline'], 'linear-regression.pkl')
+# # Ridge Regression
+# dump(ridge['Pipeline'], 'ridge-regression.pkl')
+# # Lasso Regression
+# dump(lasso['Pipeline'], 'lasso-regression.pkl')
+# # Support Vector Regression
+# dump(svr['Pipeline'], 'support-vector-regression.pkl')
+# # Linear Regression on GE stock
+# dump(ge_lr['Pipeline'], 'linear-regression-GE.pkl')
+
+# from google.colab import files
+# files.download('linear-regression.pkl')
+# files.download('ridge-regression.pkl')
+# files.download('lasso-regression.pkl')
+# files.download('support-vector-regression.pkl')
+# files.download('linear-regression-GE.pkl')

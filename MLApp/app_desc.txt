@@ -2,12 +2,12 @@ I am building a flask app to demonstrate a few ML models working on stock price 
 
 1. Input page
 - Choose model (dropdown list)
-- Choose ticker (dropdown list): GOOG and GE
-- Choose time steps (dropdown list): currently, have 1, 5, 10 and 365 days
-- Choose other performance metrics to be shown (tickbox for each? is there a more elegant solution?): Root square mean error, Residual, Mean absolute percentage error
+- Choose time steps (dropdown list): currently, have 1, 5, 10 and 365 daysshown (tickbox for each? is there a more elegant solution?): Root square mean error, R^2 Score, Mean absolute percentage error
+- Choose other performance metrics to be 
 2. Output page
 - Comparison graph (mandatory)
 - Show RMSE
-- Show Residual
+- Show R^2 Score
 - Show MAPE
 last 3 are optional and should be hidden as necessary
+- should have a button that redirects back to input page

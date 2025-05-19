@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block header %}
+    <h1>{% block title %}Prediction Results{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <main class="container">
+        <section class="card shadow-sm mb-4">
+            <header class="card-header">
+                <h4>{{ model_name }} ({{ time_step }} day{% if time_step != 1 %}s{% endif %})</h4>
+            </header>
+            <article class="card-body">
+                <!-- Chart display with fixed height and clear spacing -->
+                <div class="chart-container" style="margin-bottom: 50px; height: auto;">
+                    <img src="{{ chart_image }}" alt="Prediction Chart" class="img-fluid w-100" style="max-height: 500px; object-fit: contain;">
+                </div>
+                
+                <!-- Horizontal rule for clear visual separation -->
+                <hr class="my-4">
+                
+                <!-- Metrics display with extra spacing -->
+                {% if rmse is not none or r2 is not none or mape is not none %}
+                    <h5 class="mb-4">Performance Metrics</h5>
+                    <div class="row g-4 mb-4">
+                        {% if rmse is not none %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Root Mean Square Error</h5>
+                                        <p class="card-text fs-4">{{ rmse|round(4) }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if r2 is not none %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">R² Score</h5>
+                                        <p class="card-text fs-4">{{ r2|round(4) }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if mape is not none %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Mean Absolute Percentage Error</h5>
+                                        <p class="card-text fs-4">{{ mape|round(4) }}%</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                
+                <!-- Back button with extra spacing -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-5">
+                    <a href="{{ url_for('param-input.index') }}" class="btn btn-primary">
+                        Back to Input
+                    </a>
+                </div>
+            </article>
+        </section>
+    </main>
+{% endblock %}
