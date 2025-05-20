@@ -1,8 +1,8 @@
 from joblib import parallel_backend, load
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, VotingRegressor
 from sklearn.model_selection import train_test_split, GridSearchCV
-# import matplotlib
-# matplotlib.use('Agg')
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -57,8 +57,8 @@ def prepare_data():
     df['Close_t-2'] = df['Close'].shift(2)
     df['Close_t-3'] = df['Close'].shift(3)
     
-    # Creating target variable (next n-day's closing price)
-    prediction_days = 10
+    # Creating target variable (next prediction_days day's closing price)
+    prediction_days = 1
     df['Target'] = df['Close'].shift(-prediction_days)
     df.dropna(inplace=True)
 
@@ -199,17 +199,22 @@ if __name__ == "__main__":
     }
 
     for model_id in model_ids:
+        print(f"\n{'='*50}")
         print(f"Testing model: {model_names[model_id]}")
+        print(f"{'='*50}")
         
+            # Load the model
         model = get_model(model_id)
+        print(f"Loaded model: {type(model)}")
         
+        # Test running predictions
         result = run_model(model, time_step=1)
-        # print(f"RMSE: {result['rmse']:.4f}")
-        # print(f"R²: {result['r2']:.4f}")
-        # print(f"MAPE: {result['mape']:.4f}%")
-        print(f"Metrics - RMSE: {result['rmse']:.4f}, R²: {result['r2']:.4f}, MAPE: {result['mape']:.4f}%")
+        print(f"RMSE: {result['rmse']:.4f}")
+        print(f"R²: {result['r2']:.4f}")
+        print(f"MAPE: {result['mape']:.4f}%")
         
-        print("Testing plot...", end=" ")
+        # Test plotting
+        print("Generating plot...")
         plot(
             model_names[model_id], 
             result["y_test"], 
@@ -218,4 +223,3 @@ if __name__ == "__main__":
             time_step=1,
             return_file=False
         )
-        print()

@@ -21,20 +21,20 @@ def results():
     if "Ensemble" in model_name:
         from .models.tree_based_ensemble import ensemble
         model_id_map = {
-        "Ensemble - Decision Tree": "tree",
-        "Ensemble - Random Forest": "forest",
-        "Ensemble - Gradient Boosting": "grad",
-        "Ensemble - Voting Regressor": "vr",
-        "Ensemble - XGBoost": "xg",
+        "Ensemble - Decision Tree (GE Stock)": "tree",
+        "Ensemble - Random Forest (GE Stock)": "forest",
+        "Ensemble - Gradient Boosting (GE Stock)": "grad",
+        "Ensemble - Voting Regressor (GE Stock)": "vr",
+        "Ensemble - XGBoost (GE Stock)": "xg",
         }
         model = ensemble.get_model(model_id_map[model_name])
         result = ensemble.run_model(model, time_step)
 
-        X_test = result['X_test']
-        y_test = result['y_test']
-        y_pred = result['y_pred']
-
-        chart_image = ensemble.plot(model_name, y_test, y_pred, X_test, time_step)
+        chart_image = ensemble.plot(model_name, 
+                                    result['y_test'],
+                                    result['y_pred'], 
+                                    result['X_test'],
+                                    time_step)
 
         if 'rmse' in metrics: rmse = result['rmse']
         if 'mape' in metrics: mape = result['mape']
@@ -42,28 +42,25 @@ def results():
     
     # 2nd is regression
     elif "Regression" in model_name:
-        from .models.regression import regression
+        from .models.regression_v2 import regression_v2
         model_id_map = {
-            "Regression - Linear Regression": "linear",
-            "Regression - Ridge Regression": "ridge",
-            "Regression - Lasso Regression": "lasso",
-            "Regression - Support Vector Regression": "svr",
-            "Regression - Linear Regression (GE Stock)": "linear_ge",
+            "Regression - Linear Regression (GE Stock)": 'ge_lr',
+            "Regression - Ridge Regression (GE Stock)": 'ge_ridge',
+            "Regression - Lasso Regression (GE Stock)": 'ge_lasso',
+            "Regression - Support Vector Regression (GE Stock)": 'ge_svr',
+            "Regression - Linear Regression (GOOG Stock)": 'gg_svr',
         }
-        model = regression.get_model(model_id_map[model_name])
-        result = regression.run_model(model, time_step)
+        model = regression_v2.get_model(model_id_map[model_name])
+        result = regression_v2.run_model(model, time_step)
 
-        X_test = result['X_test']
-        y_test = result['y_test']
-        y_pred = result['y_pred']
-
-        chart_image = regression.plot(model_name, y_test, y_pred, X_test, time_step)
+        chart_image = regression_v2.plot(model_name, 
+                                         result['y_test'], 
+                                         result['y_pred'],
+                                         time_step)
 
         if 'rmse' in metrics: rmse = result['rmse']
         if 'mape' in metrics: mape = result['mape']
-        if 'r2' in metrics: r2 = result['r2'] 
-
-    
+        if 'r2' in metrics: r2 = result['r2']
 
     return render_template('output.html',
                            model_name=model_name,

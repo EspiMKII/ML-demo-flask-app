@@ -153,7 +153,7 @@ def run_model(model, time_step=1):
         "mape": mape
     }
 
-def plot(model_name, y_test, y_pred, X_test, time_step=1, return_file=True):
+def plot(model_name, y_test, y_pred, time_step=1, return_file=True):
     """
     Generate plot comparing actual vs predicted values.
     
@@ -161,7 +161,6 @@ def plot(model_name, y_test, y_pred, X_test, time_step=1, return_file=True):
         model_name (str): Name of the model
         y_test (pd.Series): Actual values
         y_pred (pd.Series): Predicted values
-        X_test (pd.DataFrame): Feature data
         time_step (int): Time step interval
         return_file (bool): Whether to return a base64 image
     

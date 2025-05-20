@@ -7,16 +7,16 @@ bp = Blueprint('param-input', __name__, url_prefix = '/param-input')
 @bp.route('/', methods=('GET', 'POST'))
 def index():
     models = [
-        "Ensemble - Decision Tree",
-        "Ensemble - Random Forest",
-        "Ensemble - Gradient Boosting",
-        "Ensemble - Voting Regressor",
-        "Ensemble - XGBoost",
-        "Regression - Linear Regression",
-        "Regression - Ridge Regression",
-        "Regression - Lasso Regression",
-        "Regression - Support Vector Regression",
+        "Ensemble - Decision Tree (GE Stock)",
+        "Ensemble - Random Forest (GE Stock)",
+        "Ensemble - Gradient Boosting (GE Stock)",
+        "Ensemble - Voting Regressor (GE Stock)",
+        "Ensemble - XGBoost (GE Stock)",
         "Regression - Linear Regression (GE Stock)",
+        "Regression - Ridge Regression (GE Stock)",
+        "Regression - Lasso Regression (GE Stock)",
+        "Regression - Support Vector Regression (GE Stock)",
+        "Regression - Linear Regression (GOOG Stock)",
         "Long-Short Term Memory"
     ]
     time_step = [1, 5, 10, 365]
