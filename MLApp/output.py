@@ -38,7 +38,32 @@ def results():
 
         if 'rmse' in metrics: rmse = result['rmse']
         if 'mape' in metrics: mape = result['mape']
-        if 'r2' in metrics: r2 = result['r2']
+        if 'r2' in metrics: r2 = result['r2'] 
+    
+    # 2nd is regression
+    elif "Regression" in model_name:
+        from .models.regression import regression
+        model_id_map = {
+            "Regression - Linear Regression": "linear",
+            "Regression - Ridge Regression": "ridge",
+            "Regression - Lasso Regression": "lasso",
+            "Regression - Support Vector Regression": "svr",
+            "Regression - Linear Regression (GE Stock)": "linear_ge",
+        }
+        model = regression.get_model(model_id_map[model_name])
+        result = regression.run_model(model, time_step)
+
+        X_test = result['X_test']
+        y_test = result['y_test']
+        y_pred = result['y_pred']
+
+        chart_image = regression.plot(model_name, y_test, y_pred, X_test, time_step)
+
+        if 'rmse' in metrics: rmse = result['rmse']
+        if 'mape' in metrics: mape = result['mape']
+        if 'r2' in metrics: r2 = result['r2'] 
+
+    
 
     return render_template('output.html',
                            model_name=model_name,

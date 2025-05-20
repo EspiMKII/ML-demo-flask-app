@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
@@ -13,7 +15,7 @@ import joblib
 
 def get_model(model_id):
     """
-    Load a regression model from disk based on model ID.
+    Load a saved regression model based on model ID.
     
     Args:
         model_id (str): ID of the model to load
@@ -24,7 +26,7 @@ def get_model(model_id):
             'linear_ge' - Linear Regression for GE Stock
     
     Returns:
-        Pipeline: Loaded scikit-learn pipeline
+        Any: some scikit-learn model
     """
     model_map = {
         "linear": "linear-regression.pkl",
@@ -40,11 +42,8 @@ def get_model(model_id):
     model_path = os.path.join(script_dir, model_file)
     
     # Load the model
-    try:
-        model = joblib.load(model_path)
-        return model
-    except Exception as e:
-        raise ValueError(f"Error loading model {model_id}: {str(e)}")
+    model = joblib.load(model_path)
+    return model
 
 def prepare_data(time_step=1, stock='GOOG', feature_names=None):
     """
@@ -78,9 +77,11 @@ def prepare_data(time_step=1, stock='GOOG', feature_names=None):
     if feature_names is not None:
         # Create a dataframe with exactly the right features in the right order
         window = 2  # Assuming 2 lag features
+        # n lag features: closing price of the days before
+        # for example: window = 2 means closing prices of yesterday, and yester-yesterday
         n = len(df['Close']) - window - 1
         
-        # Create base features
+        # Create lag features
         features = {}
         for i in range(window):
             # Create all possible lag features that the model might expect
@@ -93,25 +94,14 @@ def prepare_data(time_step=1, stock='GOOG', feature_names=None):
         for name in feature_names:
             if name in features:
                 X[name] = features[name]
-            else:
-                # If a required feature is missing, raise an error
-                raise ValueError(f"Cannot create required feature: {name}")
-    else:
-        # Default to the original approach
-        window = 2 
-        n = len(df['Close']) - window - 1
-        X = pd.DataFrame(
-            [df['Close'].iloc[i:i + window].values.flatten() for i in range(n)],
-            index=df.index[window - 1:window - 1 + n],
-            columns=[f'lag_{j+1}' for j in range(window)]
-        )
+    # btw the lag feature engineering above was JUST so that the model runs correctly buh
     
     # Create target variable (next day's closing price)
     X['target'] = df['Close'].shift(-1).iloc[window - 1:window - 1 + n]
     X = X.dropna()
     y = X.pop('target')
     
-    # Split into train/test (using last 20% for testing)
+    # Split into train/test (last 20% as test)
     split_idx = int(len(X) * 0.8)
     X_test = X.iloc[split_idx:]
     y_test = y.iloc[split_idx:]
@@ -129,7 +119,7 @@ def run_model(model, time_step=1):
     Run regression model prediction on test data.
     
     Args:
-        model (Pipeline): Loaded scikit-learn pipeline
+        model (Any): Loaded scikit-learn model
         time_step (int): Time step interval for data sampling
     
     Returns:
@@ -140,33 +130,20 @@ def run_model(model, time_step=1):
     
     # Extract feature names from the model if possible
     feature_names = None
-    try:
-        # For direct models
-        if hasattr(model, 'feature_names_in_'):
-            feature_names = model.feature_names_in_.tolist()
-            print(f"Using feature names from model: {feature_names}")
-        # For pipelines
-        elif hasattr(model, 'steps'):
-            for _, step in model.steps:
-                if hasattr(step, 'feature_names_in_'):
-                    feature_names = step.feature_names_in_.tolist()
-                    print(f"Using feature names from pipeline step: {feature_names}")
-                    break
-    except Exception as e:
-        print(f"Could not extract feature names: {e}")
+    if hasattr(model, 'feature_names_in_'):
+        feature_names = model.feature_names_in_.tolist()
+        print(f"Using feature names from model: {feature_names}")
     
     # Prepare data with the exact feature names needed
     X_test, y_test = prepare_data(time_step, stock, feature_names)
     
-    # Make predictions
+    # Make predictions & Calculate metrics
     y_pred = pd.Series(model.predict(X_test), index=X_test.index)
     
-    # Calculate metrics
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))
     r2 = r2_score(y_test, y_pred)
     mape = mean_absolute_percentage_error(y_test, y_pred) * 100
     
-    # Return results
     return {
         "X_test": X_test,
         "y_test": y_test,
@@ -203,7 +180,8 @@ def plot(model_name, y_test, y_pred, X_test, time_step=1, return_file=True):
     plt.plot(results.index, results['Predicted'], label='Predicted', color='orange')
     plt.xlabel('Date')
     plt.ylabel('Stock Price')
-    plt.title(f'{model_name} - Actual vs Predicted Prices (Every {time_step} Days)')
+    day_str = "Day" if time_step == 1 else "Days"
+    plt.title(f'{model_name} - Actual vs Predicted Prices (Every {time_step} ' + day_str + ')') 
     plt.legend()
     plt.tight_layout()
     
@@ -236,27 +214,23 @@ if __name__ == "__main__":
         print(f"Testing model: {model_names[model_id]}")
         print(f"{'='*50}")
         
-        try:
             # Load the model
-            model = get_model(model_id)
-            print(f"Loaded model: {type(model)}")
-            
-            # Test running predictions
-            result = run_model(model, time_step=5)
-            print(f"RMSE: {result['rmse']:.4f}")
-            print(f"R²: {result['r2']:.4f}")
-            print(f"MAPE: {result['mape']:.4f}%")
-            
-            # Test plotting (comment out to avoid displaying many plots)
-            print("Generating plot...")
-            plot(
-                model_names[model_id], 
-                result["y_test"], 
-                result["y_pred"], 
-                result["X_test"], 
-                time_step=5,
-                return_file=False  # Set to True to avoid displaying plots
-            )
-            
-        except Exception as e:
-            print(f"Error testing {model_id}: {str(e)}")
+        model = get_model(model_id)
+        print(f"Loaded model: {type(model)}")
+        
+        # Test running predictions
+        result = run_model(model, time_step=1)
+        print(f"RMSE: {result['rmse']:.4f}")
+        print(f"R²: {result['r2']:.4f}")
+        print(f"MAPE: {result['mape']:.4f}%")
+        
+        # Test plotting
+        print("Generating plot...")
+        plot(
+            model_names[model_id], 
+            result["y_test"], 
+            result["y_pred"], 
+            result["X_test"], 
+            time_step=1,
+            return_file=False
+        )

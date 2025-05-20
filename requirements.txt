@@ -7,3 +7,4 @@ seaborn==0.13.2
 keras==3.8.0
 yfinance==0.2.61
 matplotlib==3.10.0
+statsmodels==0.14.4
