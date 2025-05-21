@@ -8,4 +8,4 @@ keras==3.8.0
 yfinance==0.2.61
 matplotlib==3.10.0
 statsmodels==0.14.4
-tensorflow==2.15.0
+tensorflow==2.19.0
