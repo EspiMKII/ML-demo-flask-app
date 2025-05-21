@@ -1,14 +1,14 @@
 import pandas as pd
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
+# import matplotlib
+# matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.svm import SVR
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_percentage_error
-from .utils import *
+from utils import *
 import os
 import io
 import base64
@@ -33,7 +33,7 @@ def get_model(model_id):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     model_path = os.path.join(script_dir, f'{model_id}_1.pkl')
 
-    print(model_path)
+    # print(model_path)
 
     # Load the model using pickle since models were saved with pickle.dump()
     with open(model_path, 'rb') as f:
@@ -66,15 +66,10 @@ def prepare_data(time_step=1, stock='GE'):
     df = pd.read_csv(data_path, index_col=0, parse_dates=True).drop(columns=['OpenInt'])
     
     # creating the data sets from the data, and splitting thme
-    df_X_1, df_y_1 = create_dataset(df, window=1, predicted_interval=10)
+    df_X_1, df_y_1 = create_dataset(df, window=1, predicted_interval=time_step)
     df_X_1_train, df_X_1_test, df_y_1_train, df_y_1_test = split_dataset(df_X_1, df_y_1)
 
-    # Planting time steps
-    step_indices = list(range(0, len(df_X_1_test), time_step))
-    X_test = df_X_1_test.iloc[step_indices]
-    y_test = df_y_1_test.iloc[step_indices]
-
-    return X_test, y_test
+    return df_X_1_test, df_y_1_test
 
 def get_stock_from_model(model):
     """Helper function to find which stock a model was trained on"""
@@ -98,12 +93,12 @@ def run_model(model, time_step=1, ):
     Returns:
         dict: Results dictionary with predictions and metrics
     """
-    
     # Determine stock
     stock = get_stock_from_model(model)
 
     # Prepare data
     X_test, y_test = prepare_data(time_step, stock)
+    print(X_test.info())
 
     # Make predictions & Calculate metrics
     y_pred = pd.Series(model.predict(X_test), index = X_test.index)
@@ -149,7 +144,7 @@ def plot(model_name, y_test, y_pred, time_step=1, return_file=True):
     plt.xlabel('Date')
     plt.ylabel('Stock Price')
     day_str = "Day" if time_step == 1 else "Days"
-    plt.title(f'{model_name} - Actual vs Predicted Prices (Every {time_step} ' + day_str + ')') 
+    plt.title(f'{model_name} - Actual vs Predicted Prices After {time_step} ' + day_str) 
     plt.legend()
     plt.tight_layout()
     
@@ -167,21 +162,23 @@ def plot(model_name, y_test, y_pred, time_step=1, return_file=True):
 
 # For testing
 if __name__ == "__main__":
-    model_ids = ['ge_lr', 'ge_ridge', 'ge_lasso', 'ge_svr', 'gg_svr']
+    # model_ids = ['ge_lr', 'ge_ridge', 'ge_lasso', 'ge_svr', 'gg_svr']
+    model_ids = ['ge_lr', 'gg_svr']
     model_names = {
-        'ge_lr': 'Linear Regression (GE)',
-        'ge_ridge': 'Ridge Regression (GE)',
-        'ge_lasso': 'Lasso Regression (GE)',
-        'ge_svr': 'Support Vector Regression (GE)',
-        'gg_svr': 'Support Vector Regression (GOOG)'
+        'ge_lr': "Regression - Linear Regression (GE Stock)",
+        # 'ge_ridge': "Regression - Ridge Regression (GE Stock)",
+        # 'ge_lasso': "Regression - Lasso Regression (GE Stock)",
+        # 'ge_svr': "Regression - Support Vector Regression (GE Stock)",
+        'gg_svr':  "Regression - Linear Regression (GOOG Stock)"
     }
     
     for model_id in model_ids:
         print(f"\nTesting: {model_names[model_id]}")
-        
+
+        time_step = 10
         model = get_model(model_id)
         
-        result = run_model(model, time_step=1)
+        result = run_model(model, time_step)
         print(f"Metrics - RMSE: {result['rmse']:.4f}, R²: {result['r2']:.4f}, MAPE: {result['mape']:.4f}%")
         
         print("Testing plot...", end=" ")
@@ -189,7 +186,7 @@ if __name__ == "__main__":
             model_names[model_id], 
             result["y_test"], 
             result["y_pred"], 
-            time_step=1,
+            time_step,
             return_file=False
         )
         print()

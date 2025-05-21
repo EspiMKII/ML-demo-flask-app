@@ -14,7 +14,7 @@ import seaborn as sns
 import sklearn
 import os
 
-def prepare_data():
+def prepare_data(time_step=10):
     """
     Prepare stock data for ensemble model predictions
 
@@ -30,7 +30,6 @@ def prepare_data():
     
     # These were done in the notebook, so I'm doing it here too
     df.drop(['OpenInt', 'Volume', 'Unnamed: 0'], axis=1, inplace=True)
-    df = df.tail(7500)
     
     # Convert Date to datetime and set as index
     df['Date'] = pd.to_datetime(df['Date'])
@@ -58,7 +57,7 @@ def prepare_data():
     df['Close_t-3'] = df['Close'].shift(3)
     
     # Creating target variable (next n-day's closing price)
-    prediction_days = 10
+    prediction_days = time_step
     df['Target'] = df['Close'].shift(-prediction_days)
     df.dropna(inplace=True)
 
@@ -113,30 +112,30 @@ def run_model(model, time_step=1):
         dict: results dictionary with prediction and metrics
     """
     # Prepare the data to predict
-    X_test, y_test = prepare_data()
+    X_test, y_test = prepare_data(time_step)
     
-    # Planting time steps
-    step_indices = range(0, len(X_test), time_step)
-    X_test_stepped = X_test.iloc[step_indices]
-    y_test_stepped = y_test.iloc[step_indices]
+    # # Planting time steps
+    # step_indices = range(0, len(X_test), time_step)
+    # X_test_stepped = X_test.iloc[step_indices]
+    # y_test_stepped = y_test.iloc[step_indices]
     
     # Make predictions & Calculating metrics
-    y_pred = model.predict(X_test_stepped)
+    y_pred = model.predict(X_test)
     
-    rmse = np.sqrt(mean_squared_error(y_test_stepped, y_pred))
-    r2 = r2_score(y_test_stepped, y_pred)
-    mape = mean_absolute_percentage_error(y_test_stepped, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    r2 = r2_score(y_test, y_pred)
+    mape = mean_absolute_percentage_error(y_test, y_pred)
     
     return {
-        "X_test": X_test_stepped,
-        "y_test": y_test_stepped,
+        "X_test": X_test,
+        "y_test": y_test,
         "y_pred": y_pred,
         "rmse": rmse,
         "r2": r2,
         "mape": mape
     }
 
-def plot(model_name, y_test, y_pred, X_test, time_step=1, return_file=True):
+def plot(model_name, y_test, y_pred, X_test, time_step=10, return_file=True):
     '''
     Generate plot comparing actual vs predicted values
 
@@ -167,7 +166,7 @@ def plot(model_name, y_test, y_pred, X_test, time_step=1, return_file=True):
     plt.xlabel('Date')
     plt.ylabel('Stock Closing Price')
     day_str = "Day" if time_step == 1 else "Days"
-    plt.title(model_name + f' - Actual vs Predicted Closing Prices (Every {time_step} ' + day_str + ')')
+    plt.title(model_name + f' - Actual vs Predicted Closing Prices After {time_step} ' + day_str)
     plt.legend()
     plt.tight_layout()
     
@@ -191,19 +190,20 @@ if __name__ == "__main__":
     # Test all ensemble models
     model_ids = ['tree', 'forest', 'grad', 'vr', 'xg']
     model_names = {
-        'tree': 'Decision Tree',
-        'forest': 'Random Forest',
-        'grad': 'Gradient Boosting',
-        'vr': 'Voting Regressor',
-        'xg': 'XGBoost'
+        'tree':  "Ensemble - Decision Tree (GE Stock)",
+        'forest': "Ensemble - Random Forest (GE Stock)",
+        'grad': "Ensemble - Gradient Boosting (GE Stock)",
+        'vr': "Ensemble - Voting Regressor (GE Stock)",
+        'xg':  "Ensemble - XGBoost (GE Stock)"
     }
 
     for model_id in model_ids:
         print(f"Testing model: {model_names[model_id]}")
         
-        model = get_model(model_id)
-        
-        result = run_model(model, time_step=1)
+        time_step = 10
+        model = get_model(model_id)     
+
+        result = run_model(model, time_step)
         # print(f"RMSE: {result['rmse']:.4f}")
         # print(f"R²: {result['r2']:.4f}")
         # print(f"MAPE: {result['mape']:.4f}%")
@@ -215,7 +215,7 @@ if __name__ == "__main__":
             result["y_test"], 
             result["y_pred"], 
             result["X_test"], 
-            time_step=1,
+            time_step,
             return_file=False
         )
         print()
