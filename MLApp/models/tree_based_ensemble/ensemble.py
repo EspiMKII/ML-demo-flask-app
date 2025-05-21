@@ -113,12 +113,7 @@ def run_model(model, time_step=1):
     """
     # Prepare the data to predict
     X_test, y_test = prepare_data(time_step)
-    
-    # # Planting time steps
-    # step_indices = range(0, len(X_test), time_step)
-    # X_test_stepped = X_test.iloc[step_indices]
-    # y_test_stepped = y_test.iloc[step_indices]
-    
+
     # Make predictions & Calculating metrics
     y_pred = model.predict(X_test)
     
@@ -154,7 +149,6 @@ def plot(model_name, y_test, y_pred, X_test, time_step=10, return_file=True):
     # step_indices = list(range(0, len(X_test), time_step))
     
     # # Get the indices for the stepped data
-    # pred_indices = X_test.index[step_indices]
     
     # Create plot with actual data
     plt.figure(figsize=(12, 6))
@@ -163,10 +157,10 @@ def plot(model_name, y_test, y_pred, X_test, time_step=10, return_file=True):
     # Plot predicted data - make sure to use only the stepped indices
     plt.plot(X_test.index, y_pred, label='Predicted', color='orange')
     
-    plt.xlabel('Date')
+    plt.xlabel('Time')
     plt.ylabel('Stock Closing Price')
     day_str = "Day" if time_step == 1 else "Days"
-    plt.title(model_name + f' - Actual vs Predicted Closing Prices After {time_step} ' + day_str)
+    plt.title(model_name + f' - Actual vs Predicted GE Stock Prices After {time_step} ' + day_str)
     plt.legend()
     plt.tight_layout()
     
@@ -190,23 +184,20 @@ if __name__ == "__main__":
     # Test all ensemble models
     model_ids = ['tree', 'forest', 'grad', 'vr', 'xg']
     model_names = {
-        'tree':  "Ensemble - Decision Tree (GE Stock)",
-        'forest': "Ensemble - Random Forest (GE Stock)",
-        'grad': "Ensemble - Gradient Boosting (GE Stock)",
-        'vr': "Ensemble - Voting Regressor (GE Stock)",
-        'xg':  "Ensemble - XGBoost (GE Stock)"
+        'tree':  "Ensemble - Decision Tree",
+        'forest': "Ensemble - Random Forest",
+        'grad': "Ensemble - Gradient Boosting",
+        'vr': "Ensemble - Voting Regressor",
+        'xg':  "Ensemble - XGBoost"
     }
 
     for model_id in model_ids:
         print(f"Testing model: {model_names[model_id]}")
         
-        time_step = 10
+        time_step = 1
         model = get_model(model_id)     
 
         result = run_model(model, time_step)
-        # print(f"RMSE: {result['rmse']:.4f}")
-        # print(f"R²: {result['r2']:.4f}")
-        # print(f"MAPE: {result['mape']:.4f}%")
         print(f"Metrics - RMSE: {result['rmse']:.4f}, R²: {result['r2']:.4f}, MAPE: {result['mape']:.4f}%")
         
         print("Testing plot...", end=" ")

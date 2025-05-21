@@ -7,19 +7,19 @@ bp = Blueprint('param-input', __name__, url_prefix = '/param-input')
 @bp.route('/', methods=('GET', 'POST'))
 def index():
     models = [
-        "Ensemble - Decision Tree (GE Stock)",
-        "Ensemble - Random Forest (GE Stock)",
-        "Ensemble - Gradient Boosting (GE Stock)",
-        "Ensemble - Voting Regressor (GE Stock)",
-        "Ensemble - XGBoost (GE Stock)",
-        "Regression - Linear Regression (GE Stock)",
-        "Regression - Ridge Regression (GE Stock)",
-        "Regression - Lasso Regression (GE Stock)",
-        "Regression - Support Vector Regression (GE Stock)",
-        "Regression - Linear Regression (GOOG Stock)",
+        "Ensemble - Decision Tree",
+        "Ensemble - Random Forest",
+        "Ensemble - Gradient Boosting",
+        "Ensemble - Voting Regressor",
+        "Ensemble - XGBoost",
+        "Regression - Linear Regression",
+        "Regression - Ridge Regression",
+        "Regression - Lasso Regression",
+        "Regression - Support Vector Regression",
         "Long-Short Term Memory"
     ]
-    time_step = [1, 5, 10, 365]
+    tickers = ['GOOG', 'GE']
+    time_step = [1, 10, 30]
     metrics = [
         {'id': 'rmse', 'name': 'Root Mean Square Error'},
         {'id': 'r2', 'name': 'R^2 Score'},
@@ -30,6 +30,7 @@ def index():
         pass
         session['model'] = request.form.get('model')
         session['time_step'] = int(request.form.get('time_step'))
+        session['ticker'] = request.form.get('ticker')
         session['metrics'] = request.form.getlist('metrics')
 
         return redirect(url_for('output.results'))
@@ -37,5 +38,6 @@ def index():
     return render_template('input.html',
                            models=models,
                            time_step=time_step,
-                           metrics=metrics
+                           metrics=metrics,
+                           tickers=tickers
                            )

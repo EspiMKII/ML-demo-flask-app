@@ -23,6 +23,17 @@
                         </select>
                     </fieldset>
 
+                    <!-- Stock Selection -->
+                    <fieldset class="mb-3">
+                        <legend class="form-label">Select Stock</legend>
+                        <select class="form-select" id="ticker" name="ticker" required>
+                            <option value="" selected disabled>Choose a stock...</option>
+                            {% for ticker in tickers %}
+                                <option value="{{ ticker }}">{{ ticker }}</option>
+                            {% endfor %}
+                        </select>
+                    </fieldset>
+
                     <!-- Time Step Selection -->
                     <fieldset class="mb-3">
                         <legend class="form-label">Select Time Steps</legend>
@@ -54,4 +65,35 @@
             </article>
         </section>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modelSelect = document.getElementById('model');
+            const tickerSelect = document.getElementById('ticker');
+            const tickerOptions = Array.from(tickerSelect.options);
+
+            modelSelect.addEventListener('change', function() {
+                const selectedModel = this.value.toLowerCase();
+                
+                // Reset options first
+                tickerSelect.innerHTML = '';
+                tickerSelect.appendChild(new Option('Choose a stock...', '', true, true));
+                
+                if (selectedModel.includes('ensemble')) {
+                    // For ensemble models, only show GE
+                    const geOption = tickerOptions.find(opt => opt.value === 'GE');
+                    if (geOption) {
+                        tickerSelect.appendChild(new Option(geOption.text, geOption.value));
+                    }
+                } else {
+                    // For regression models, show all options
+                    tickerOptions.forEach(opt => {
+                        if (opt.value) { // Skip the placeholder option
+                            tickerSelect.appendChild(new Option(opt.text, opt.value));
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 {% endblock %}

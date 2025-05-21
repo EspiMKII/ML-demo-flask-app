@@ -12,6 +12,7 @@ def results():
     model_name = session.get('model')
     time_step = session.get('time_step', 1)
     metrics = session.get('metrics', [])
+    ticker = session.get('ticker')
 
     # need this so if none of the metrics are selected, the app wouldn't crash
     rmse, mape, r2, chart_image = None, None, None, None
@@ -21,11 +22,11 @@ def results():
     if "Ensemble" in model_name:
         from .models.tree_based_ensemble import ensemble
         model_id_map = {
-        "Ensemble - Decision Tree (GE Stock)": "tree",
-        "Ensemble - Random Forest (GE Stock)": "forest",
-        "Ensemble - Gradient Boosting (GE Stock)": "grad",
-        "Ensemble - Voting Regressor (GE Stock)": "vr",
-        "Ensemble - XGBoost (GE Stock)": "xg",
+        "Ensemble - Decision Tree": 'tree',
+        "Ensemble - Random Forest": 'forest',
+        "Ensemble - Gradient Boosting": 'grad',
+        "Ensemble - Voting Regressor": 'vr',
+        "Ensemble - XGBoost": 'xg',
         }
         model = ensemble.get_model(model_id_map[model_name])
         result = ensemble.run_model(model, time_step)
@@ -35,33 +36,41 @@ def results():
                                     result['y_pred'], 
                                     result['X_test'],
                                     time_step)
-
-        if 'rmse' in metrics: rmse = result['rmse']
-        if 'mape' in metrics: mape = result['mape']
-        if 'r2' in metrics: r2 = result['r2'] 
     
     # 2nd is regression
     elif "Regression" in model_name:
         from .models.regression_v2 import regression_v2
         model_id_map = {
-            "Regression - Linear Regression (GE Stock)": 'ge_lr',
-            "Regression - Ridge Regression (GE Stock)": 'ge_ridge',
-            "Regression - Lasso Regression (GE Stock)": 'ge_lasso',
-            "Regression - Support Vector Regression (GE Stock)": 'ge_svr',
-            "Regression - Linear Regression (GOOG Stock)": 'gg_svr',
+            "Regression - Linear Regression": 'lr',
+            "Regression - Ridge Regression": 'ridge',
+            "Regression - Lasso Regression": 'lasso',
+            "Regression - Support Vector Regression": 'svr'
         }
-        model = regression_v2.get_model(model_id_map[model_name])
+        model = regression_v2.get_model(model_id_map[model_name], ticker, time_step)
         result = regression_v2.run_model(model, time_step)
 
         chart_image = regression_v2.plot(model_name, 
                                          result['y_test'], 
                                          result['y_pred'],
+                                         ticker,
                                          time_step)
 
-        if 'rmse' in metrics: rmse = result['rmse']
-        if 'mape' in metrics: mape = result['mape']
-        if 'r2' in metrics: r2 = result['r2']
+    # 3rd is lstm
+    else: # "Long-Short Term Memory"
+        from .models.long_short_term_memory import lstm
+        model = lstm.get_model(ticker, time_step)
+        result = lstm.run_model(model, time_step, ticker)
 
+        chart_image = lstm.plot("Long-Short Term Memory",
+                               result['y_test'],
+                               result['y_pred'],
+                               ticker,
+                               time_step)
+
+    if 'rmse' in metrics: rmse = result['rmse']
+    if 'mape' in metrics: mape = result['mape']
+    if 'r2' in metrics: r2 = result['r2']
+    
     return render_template('output.html',
                            model_name=model_name,
                            time_step=time_step,

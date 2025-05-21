@@ -14,40 +14,39 @@ import io
 import base64
 import pickle as pkl
 
-def get_model(model_id):
+def get_model(model_id, ticker='GOOG', time_step=10):
     """
-    Load a saved regression model based on model ID.
+    Load a saved regression model based on model ID, ticker, and time step.
     
     Args:
         model_id (str): ID of the model to load
-            'ge_lr' - Linear Regression, GE stock
-            'ge_ridge' - Ridge Regression, GE stock
-            'ge_lasso' - Lasso Regression, GE stock
-            'ge_svr' - Support Vector Regression, GE stock
-            'gg_svr' - Suppport Vector Regression, GOOG stock
-    
+            'lr': Linear Regression
+            'lasso': Lasso Regression
+            'ridge': Ridge Regression
+            'svr': Support Vector Regression
+        ticker (str): 'GOOG' or 'GE', default 'GOOG'
+        time-step (int): time step, default 10
     Returns:
         Any: some scikit-learn model
     """
     # Get the path to the model file
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    model_path = os.path.join(script_dir, f'{model_id}_1.pkl')
-
-    # print(model_path)
+    ticker_name = 'gg' if ticker == 'GOOG' else 'ge'
+    model_name = ticker_name + '_' + model_id + '_' + str(time_step) + '.pkl'
+    model_path = os.path.join(script_dir, model_name)
 
     # Load the model using pickle since models were saved with pickle.dump()
     with open(model_path, 'rb') as f:
         return pkl.load(f)
 
-def prepare_data(time_step=1, stock='GE'):
+def prepare_data(time_step=10, ticker='GOOG'):
     # heavily carried by utils.py
     """
-    Prepare stock data for regression model predictions.
+    Prepare ticker data for regression model predictions.
     
     Args:
-        time_step (int): Time step interval for data sampling
-        stock (str): Stock symbol to use (GOOG or GE)
-        feature_names (list): Specific feature names to use (for model compatibility)
+        time_step (int): Time step, default 10
+        ticker (str): 'GOOG' or 'GE', default 'GOOG'
     
     Returns:
         tuple: X_test (DataFrame), y_test (Series) for prediction
@@ -57,10 +56,10 @@ def prepare_data(time_step=1, stock='GE'):
     script_dir = os.path.dirname(os.path.abspath(__file__))
     data_dir = os.path.join(script_dir, '..', '..', 'data', 'regression-v2')
 
-    if stock == 'GE':
-        data_path = os.path.join(data_dir, 'ge.us.txt')
-    else: # GOOG
+    if ticker == 'GOOG':
         data_path = os.path.join(data_dir, 'googl.us.txt')
+    else: # GE
+        data_path = os.path.join(data_dir, 'ge.us.txt')
     
     # load the data
     df = pd.read_csv(data_path, index_col=0, parse_dates=True).drop(columns=['OpenInt'])
@@ -71,37 +70,32 @@ def prepare_data(time_step=1, stock='GE'):
 
     return df_X_1_test, df_y_1_test
 
-def get_stock_from_model(model):
-    """Helper function to find which stock a model was trained on"""
-    # Try to get the first feature name - models trained in notebook store this
-    if hasattr(model, 'feature_names_in_'):
-        first_feature = model.feature_names_in_[0]
-        return 'GE' if 'ge' in first_feature.lower() else 'GOOG'
-    
-    # Fallback: check model's string representation
+def get_ticker_from_model(model):
+    """Helper function to find which ticker a model was trained on"""
+    # Just check the model ID in the file name
     model_str = str(model).lower()
-    return 'GE' if 'ge' in model_str else 'GOOG'
+    return 'GOOG' if 'gg_' in model_str else 'GE'
 
-def run_model(model, time_step=1, ):
+def run_model(model, time_step=1):
     """
     Run regression model prediction on test data.
     
     Args:
         model (Any): Loaded scikit-learn model
-        time_step (int): Time step interval for data sampling
+        time_step (int): Time step
     
     Returns:
         dict: Results dictionary with predictions and metrics
     """
-    # Determine stock
-    stock = get_stock_from_model(model)
+    # Determine ticker
+    ticker = get_ticker_from_model(model)
 
     # Prepare data
-    X_test, y_test = prepare_data(time_step, stock)
-    print(X_test.info())
+    X_test, y_test = prepare_data(time_step, ticker)
 
     # Make predictions & Calculate metrics
     y_pred = pd.Series(model.predict(X_test), index = X_test.index)
+
 
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))
     r2 = r2_score(y_test, y_pred)
@@ -116,7 +110,7 @@ def run_model(model, time_step=1, ):
         "mape": mape,        
     }
 
-def plot(model_name, y_test, y_pred, time_step=1, return_file=True):
+def plot(model_name, y_test, y_pred, ticker, time_step=10, return_file=True):
     """
     Generate plot comparing actual vs predicted values.
     
@@ -124,8 +118,8 @@ def plot(model_name, y_test, y_pred, time_step=1, return_file=True):
         model_name (str): Name of the model
         y_test (pd.Series): Actual values
         y_pred (pd.Series): Predicted values
-        X_test (pd.DataFrame): Feature data
-        time_step (int): Time step interval
+        ticker (str): ticker
+        time_step (int): Time step
         return_file (bool): Whether to return a base64 image
     
     Returns:
@@ -141,10 +135,11 @@ def plot(model_name, y_test, y_pred, time_step=1, return_file=True):
     plt.figure(figsize=(12, 6))
     plt.plot(results.index, results['Actual'], label='Actual', color='blue')
     plt.plot(results.index, results['Predicted'], label='Predicted', color='orange')
-    plt.xlabel('Date')
-    plt.ylabel('Stock Price')
+    plt.xlabel('Time')
+    plt.ylabel('Ticker Price')
     day_str = "Day" if time_step == 1 else "Days"
-    plt.title(f'{model_name} - Actual vs Predicted Prices After {time_step} ' + day_str) 
+    ticker_str = ticker + ' Ticker '
+    plt.title(f'{model_name} - Actual vs Predicted ' + ticker_str + f'Prices After {time_step} ' + day_str) 
     plt.legend()
     plt.tight_layout()
     
@@ -162,21 +157,14 @@ def plot(model_name, y_test, y_pred, time_step=1, return_file=True):
 
 # For testing
 if __name__ == "__main__":
-    # model_ids = ['ge_lr', 'ge_ridge', 'ge_lasso', 'ge_svr', 'gg_svr']
-    model_ids = ['ge_lr', 'gg_svr']
-    model_names = {
-        'ge_lr': "Regression - Linear Regression (GE Stock)",
-        # 'ge_ridge': "Regression - Ridge Regression (GE Stock)",
-        # 'ge_lasso': "Regression - Lasso Regression (GE Stock)",
-        # 'ge_svr': "Regression - Support Vector Regression (GE Stock)",
-        'gg_svr':  "Regression - Linear Regression (GOOG Stock)"
-    }
+    model_ids = ['lr', 'ridge', 'lasso', 'svr']
+    time_step, ticker = 10, 'GOOG'
+    model_names = {model_id:ticker + '_' + model_id + '_' + str(time_step) for model_id in model_ids}
     
     for model_id in model_ids:
         print(f"\nTesting: {model_names[model_id]}")
-
-        time_step = 10
-        model = get_model(model_id)
+        
+        model = get_model(model_id, ticker, time_step)
         
         result = run_model(model, time_step)
         print(f"Metrics - RMSE: {result['rmse']:.4f}, R²: {result['r2']:.4f}, MAPE: {result['mape']:.4f}%")
@@ -186,6 +174,7 @@ if __name__ == "__main__":
             model_names[model_id], 
             result["y_test"], 
             result["y_pred"], 
+            ticker,
             time_step,
             return_file=False
         )
